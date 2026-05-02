@@ -3,6 +3,7 @@ const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
+const mongoose = require("mongoose");
 
 const authRoutes = require("./routes/auth.routes");
 const propertyRoutes = require("./routes/property.routes");
@@ -37,6 +38,20 @@ app.use(
 
 app.get("/api/health", (req, res) => {
   res.json({ ok: true });
+});
+
+app.use((req, res, next) => {
+  if (req.path === "/api/health") {
+    return next();
+  }
+
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      message: "Service unavailable: database is not connected",
+    });
+  }
+
+  return next();
 });
 
 app.use("/api/auth", authRoutes);
