@@ -3,7 +3,7 @@ const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
-const mongoose = require("mongoose");
+const { getDbDiagnostics } = require("./config/db");
 
 const authRoutes = require("./routes/auth.routes");
 const propertyRoutes = require("./routes/property.routes");
@@ -37,7 +37,20 @@ app.use(
 );
 
 app.get("/api/health", (req, res) => {
-  res.json({ ok: true });
+  const db = getDbDiagnostics();
+  const response = {
+    ok: db.connected,
+    db: {
+      connected: db.connected,
+      readyState: db.readyState,
+    },
+  };
+
+  if (db.error) {
+    response.db.error = db.error;
+  }
+
+  res.status(db.connected ? 200 : 503).json(response);
 });
 
 app.use((req, res, next) => {
@@ -45,7 +58,7 @@ app.use((req, res, next) => {
     return next();
   }
 
-  if (mongoose.connection.readyState !== 1) {
+  if (!getDbDiagnostics().connected) {
     return res.status(503).json({
       message: "Service unavailable: database is not connected",
     });

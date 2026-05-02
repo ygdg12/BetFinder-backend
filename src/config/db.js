@@ -1,13 +1,28 @@
 const mongoose = require("mongoose");
 
+let lastDbError = null;
+
 const connectDB = async () => {
   const mongoUri = process.env.MONGODB_URI;
   if (!mongoUri) {
-    throw new Error("MONGODB_URI is required");
+    lastDbError = "MONGODB_URI is required";
+    throw new Error(lastDbError);
   }
 
-  await mongoose.connect(mongoUri);
-  console.log("MongoDB connected");
+  try {
+    await mongoose.connect(mongoUri);
+    lastDbError = null;
+    console.log("MongoDB connected");
+  } catch (error) {
+    lastDbError = error.message || "Unknown database connection error";
+    throw error;
+  }
 };
 
-module.exports = connectDB;
+const getDbDiagnostics = () => ({
+  connected: mongoose.connection.readyState === 1,
+  readyState: mongoose.connection.readyState,
+  error: lastDbError,
+});
+
+module.exports = { connectDB, getDbDiagnostics };
