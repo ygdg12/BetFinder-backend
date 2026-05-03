@@ -24,6 +24,11 @@ const register = async (req, res, next) => {
       token: signToken(user._id),
     });
   } catch (error) {
+    if (error.code === 11000) {
+      res.status(400);
+      next(new Error("Email already in use"));
+      return;
+    }
     next(error);
   }
 };

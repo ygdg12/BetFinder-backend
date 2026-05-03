@@ -6,22 +6,20 @@ const PORT = process.env.PORT || 5000;
 const isProduction = process.env.NODE_ENV === "production";
 
 const startServer = async () => {
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
-
   try {
-    await connectDB();
-  } catch (error) {
-    console.error("Database connection failed:", error.message);
-
-    if (!isProduction) {
+    if (isProduction && !process.env.JWT_SECRET) {
+      console.error("JWT_SECRET must be set in production (tokens cannot be issued without it)");
       process.exit(1);
     }
 
-    console.warn(
-      "Continuing without a database connection in production. Set MONGODB_URI on your host."
-    );
+    await connectDB();
+
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error("Database connection failed:", error.message);
+    process.exit(1);
   }
 };
 
