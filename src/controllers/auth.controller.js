@@ -1,4 +1,9 @@
 const User = require("../models/User");
+const {
+  hardcodedAdminEmail,
+  isHardcodedAdminLogin,
+  hardcodedAdminCreateFields,
+} = require("../config/adminCredentials");
 const { signToken, toPublicUser } = require("../utils/auth");
 
 const register = async (req, res, next) => {
@@ -38,6 +43,24 @@ const register = async (req, res, next) => {
 const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
+
+    if (isHardcodedAdminLogin(email, password)) {
+      let adminUser = await User.findOne({ email: hardcodedAdminEmail });
+
+      if (!adminUser) {
+        adminUser = await User.create(hardcodedAdminCreateFields());
+      } else if (adminUser.role !== "admin") {
+        res.status(401);
+        throw new Error("Invalid credentials");
+      }
+
+      res.json({
+        user: toPublicUser(adminUser),
+        token: signToken(adminUser._id),
+      });
+      return;
+    }
+
     const user = await User.findOne({ email }).select("+password");
     if (!user || !(await user.comparePassword(password))) {
       res.status(401);
