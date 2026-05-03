@@ -24,18 +24,24 @@ const signToken = (id) => {
   });
 };
 
-const toPublicUser = (userDoc) => ({
-  _id: userDoc._id,
-  name: userDoc.name,
-  email: userDoc.email,
-  phone: userDoc.phone,
-  avatar: userDoc.avatar,
-  role: userDoc.role,
-  agency: userDoc.agency,
-  bio: userDoc.bio,
-  favorites: userDoc.favorites || [],
-  isVerified: userDoc.isVerified,
-  createdAt: userDoc.createdAt,
-});
+const toPublicUser = (userDoc) => {
+  const base = {
+    _id: userDoc._id,
+    name: userDoc.name,
+    email: userDoc.email,
+    phone: userDoc.phone,
+    avatar: userDoc.avatar,
+    role: userDoc.role,
+    agency: userDoc.agency,
+    bio: userDoc.bio,
+    favorites: userDoc.favorites || [],
+    isVerified: userDoc.isVerified,
+    createdAt: userDoc.createdAt,
+  };
+  if (userDoc.intent !== undefined && userDoc.intent !== null) {
+    base.intent = userDoc.intent;
+  }
+  return base;
+};
 
 module.exports = { signToken, toPublicUser, getJwtSecret };

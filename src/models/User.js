@@ -9,6 +9,11 @@ const userSchema = new mongoose.Schema(
     phone: { type: String, default: "" },
     avatar: { type: String, default: "" },
     role: { type: String, enum: ["buyer", "agent", "admin"], default: "buyer" },
+    intent: {
+      type: String,
+      enum: ["buy", "sell"],
+      required: false,
+    },
     agency: { type: String, default: "" },
     bio: { type: String, default: "" },
     favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: "Property" }],

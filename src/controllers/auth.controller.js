@@ -3,20 +3,23 @@ const { signToken, toPublicUser } = require("../utils/auth");
 
 const register = async (req, res, next) => {
   try {
-    const { name, email, password, role, phone } = req.body;
+    const { name, email, password, role, intent, phone } = req.body;
     const exists = await User.findOne({ email });
     if (exists) {
       res.status(400);
       throw new Error("Email already in use");
     }
 
-    const user = await User.create({
-      name,
+    const payload = {
+      name: typeof name === "string" ? name.trim() : name,
       email,
       password,
-      role: role || "buyer",
-      phone: phone || "",
-    });
+      role,
+      intent,
+      phone: phone !== undefined && phone !== null && String(phone).trim() !== "" ? String(phone).trim() : "",
+    };
+
+    const user = await User.create(payload);
 
     res.status(201).json({
       user: toPublicUser(user),
