@@ -1,11 +1,15 @@
 const jwt = require("jsonwebtoken");
 
+const isDeployedEnvironment = () =>
+  process.env.NODE_ENV === "production" || Boolean(process.env.RENDER);
+
 const getJwtSecret = () => {
-  if (process.env.JWT_SECRET) {
-    return process.env.JWT_SECRET;
+  const secret = process.env.JWT_SECRET?.trim();
+  if (secret) {
+    return secret;
   }
 
-  if (process.env.NODE_ENV !== "production") {
+  if (!isDeployedEnvironment()) {
     console.warn("JWT_SECRET is missing; using temporary development secret.");
     return "dev-temporary-secret";
   }
@@ -13,10 +17,12 @@ const getJwtSecret = () => {
   throw new Error("JWT_SECRET is not configured");
 };
 
-const signToken = (id) =>
-  jwt.sign({ id }, getJwtSecret(), {
+const signToken = (id) => {
+  const subject = id && typeof id.toString === "function" ? id.toString() : String(id);
+  return jwt.sign({ id: subject }, getJwtSecret(), {
     expiresIn: process.env.JWT_EXPIRES_IN || "7d",
   });
+};
 
 const toPublicUser = (userDoc) => ({
   _id: userDoc._id,
@@ -32,4 +38,4 @@ const toPublicUser = (userDoc) => ({
   createdAt: userDoc.createdAt,
 });
 
-module.exports = { signToken, toPublicUser };
+module.exports = { signToken, toPublicUser, getJwtSecret };

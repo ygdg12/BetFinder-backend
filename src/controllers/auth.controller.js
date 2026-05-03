@@ -18,13 +18,12 @@ const register = async (req, res, next) => {
       phone: phone || "",
     });
 
-    const freshUser = await User.findById(user._id);
     res.status(201).json({
-      user: toPublicUser(freshUser),
+      user: toPublicUser(user),
       token: signToken(user._id),
     });
   } catch (error) {
-    if (error.code === 11000) {
+    if (error.code === 11000 || error.code === "11000") {
       res.status(400);
       next(new Error("Email already in use"));
       return;
