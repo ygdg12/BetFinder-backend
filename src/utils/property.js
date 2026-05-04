@@ -29,6 +29,8 @@ const mapProperty = (propertyDoc) => {
       agency: agent.agency,
     },
     isApproved: property.isApproved,
+    moderationStatus: property.moderationStatus || (property.isApproved ? "approved" : "pending"),
+    rejectionReason: property.rejectionReason || "",
     isFeatured: property.isFeatured,
     views: property.views,
     favorites: property.favorites,

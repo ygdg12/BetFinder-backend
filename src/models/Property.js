@@ -45,6 +45,12 @@ const propertySchema = new mongoose.Schema(
     images: [{ type: String }],
     agent: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     isApproved: { type: Boolean, default: false },
+    moderationStatus: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+    },
+    rejectionReason: { type: String, default: "" },
     isFeatured: { type: Boolean, default: false },
     views: { type: Number, default: 0 },
     favorites: { type: Number, default: 0 },

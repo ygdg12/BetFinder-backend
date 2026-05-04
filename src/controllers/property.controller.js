@@ -160,6 +160,9 @@ const createProperty = async (req, res, next) => {
     const payload = buildPropertyPayload(req.body, req.user._id);
     payload.contactPhone = req.body.contactPhone || req.user.phone || "";
     payload.contactEmail = req.body.contactEmail || req.user.email || "";
+    payload.isApproved = req.user.role === "admin";
+    payload.moderationStatus = req.user.role === "admin" ? "approved" : "pending";
+    payload.rejectionReason = "";
 
     const files = req.files || [];
     payload.images = files.length ? await Promise.all(files.map((f) => uploadToCloudinary(f.buffer))) : [];
@@ -196,6 +199,11 @@ const updateProperty = async (req, res, next) => {
     Object.assign(property, payload);
     if (req.user.role !== "admin") {
       property.isApproved = false;
+      property.moderationStatus = "pending";
+      property.rejectionReason = "";
+    } else if (property.isApproved) {
+      property.moderationStatus = "approved";
+      property.rejectionReason = "";
     }
     await property.save();
 
@@ -275,10 +283,11 @@ const getFavorites = async (req, res, next) => {
 
 const approveProperty = async (req, res, next) => {
   try {
-    const property = await Property.findByIdAndUpdate(req.params.id, { isApproved: true }, { new: true }).populate(
-      "agent",
-      "name email phone avatar agency"
-    );
+    const property = await Property.findByIdAndUpdate(
+      req.params.id,
+      { isApproved: true, moderationStatus: "approved", rejectionReason: "" },
+      { new: true }
+    ).populate("agent", "name email phone avatar agency");
     if (!property) {
       res.status(404);
       throw new Error("Property not found");
