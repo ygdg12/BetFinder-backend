@@ -1,4 +1,5 @@
 const streamifier = require("streamifier");
+const mongoose = require("mongoose");
 const cloudinary = require("../config/cloudinary");
 const Property = require("../models/Property");
 const User = require("../models/User");
@@ -245,25 +246,41 @@ const getMyProperties = async (req, res, next) => {
 
 const toggleFavorite = async (req, res, next) => {
   try {
-    const property = await Property.findById(req.params.id);
+    const { id: propertyId } = req.params;
+    if (!mongoose.isValidObjectId(propertyId)) {
+      res.status(404);
+      throw new Error("Property not found");
+    }
+
+    const property = await Property.findById(propertyId).select("_id");
     if (!property) {
       res.status(404);
       throw new Error("Property not found");
     }
 
-    const user = await User.findById(req.user._id);
-    const exists = user.favorites.some((favoriteId) => String(favoriteId) === String(property._id));
+    const addResult = await User.updateOne(
+      { _id: req.user._id, favorites: { $ne: property._id } },
+      { $addToSet: { favorites: property._id } }
+    );
 
-    if (exists) {
-      user.favorites = user.favorites.filter((favoriteId) => String(favoriteId) !== String(property._id));
-      property.favorites = Math.max(property.favorites - 1, 0);
-    } else {
-      user.favorites.push(property._id);
-      property.favorites += 1;
+    if (addResult.matchedCount === 0) {
+      res.status(401);
+      throw new Error("User not found");
     }
 
-    await Promise.all([user.save(), property.save()]);
-    res.json({ isFavorite: !exists });
+    let isFavorite = addResult.modifiedCount > 0;
+
+    if (isFavorite) {
+      await Property.updateOne({ _id: property._id }, { $inc: { favorites: 1 } });
+    } else {
+      await Promise.all([
+        User.updateOne({ _id: req.user._id }, { $pull: { favorites: property._id } }),
+        Property.updateOne({ _id: property._id, favorites: { $gt: 0 } }, { $inc: { favorites: -1 } }),
+      ]);
+      isFavorite = false;
+    }
+
+    res.json({ isFavorite });
   } catch (error) {
     next(error);
   }
