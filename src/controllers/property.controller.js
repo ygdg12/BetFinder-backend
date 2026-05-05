@@ -258,10 +258,7 @@ const toggleFavorite = async (req, res, next) => {
       throw new Error("Property not found");
     }
 
-    const addResult = await User.updateOne(
-      { _id: req.user._id, favorites: { $ne: property._id } },
-      { $addToSet: { favorites: property._id } }
-    );
+    const addResult = await User.updateOne({ _id: req.user._id }, { $addToSet: { favorites: property._id } });
 
     if (addResult.matchedCount === 0) {
       res.status(401);
