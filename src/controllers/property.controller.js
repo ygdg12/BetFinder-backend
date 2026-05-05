@@ -258,26 +258,36 @@ const toggleFavorite = async (req, res, next) => {
       throw new Error("Property not found");
     }
 
-    const addResult = await User.updateOne({ _id: req.user._id }, { $addToSet: { favorites: property._id } });
+    const addedUser = await User.findOneAndUpdate(
+      { _id: req.user._id, favorites: { $ne: property._id } },
+      { $addToSet: { favorites: property._id } },
+      { new: true, select: "favorites" }
+    );
 
-    if (addResult.matchedCount === 0) {
+    if (addedUser) {
+      await Property.updateOne({ _id: property._id }, { $inc: { favorites: 1 } });
+      return res.json({ isFavorite: true, favorites: addedUser.favorites });
+    }
+
+    const removedUser = await User.findOneAndUpdate(
+      { _id: req.user._id, favorites: property._id },
+      { $pull: { favorites: property._id } },
+      { new: true, select: "favorites" }
+    );
+
+    if (removedUser) {
+      await Property.updateOne({ _id: property._id, favorites: { $gt: 0 } }, { $inc: { favorites: -1 } });
+      return res.json({ isFavorite: false, favorites: removedUser.favorites });
+    }
+
+    const userExists = await User.exists({ _id: req.user._id });
+    if (!userExists) {
       res.status(401);
       throw new Error("User not found");
     }
 
-    let isFavorite = addResult.modifiedCount > 0;
-
-    if (isFavorite) {
-      await Property.updateOne({ _id: property._id }, { $inc: { favorites: 1 } });
-    } else {
-      await Promise.all([
-        User.updateOne({ _id: req.user._id }, { $pull: { favorites: property._id } }),
-        Property.updateOne({ _id: property._id, favorites: { $gt: 0 } }, { $inc: { favorites: -1 } }),
-      ]);
-      isFavorite = false;
-    }
-
-    res.json({ isFavorite });
+    const currentUser = await User.findById(req.user._id).select("favorites");
+    res.json({ isFavorite: false, favorites: currentUser?.favorites || [] });
   } catch (error) {
     next(error);
   }
