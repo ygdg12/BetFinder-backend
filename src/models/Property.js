@@ -54,10 +54,20 @@ const propertySchema = new mongoose.Schema(
     isFeatured: { type: Boolean, default: false },
     views: { type: Number, default: 0 },
     favorites: { type: Number, default: 0 },
+    source: {
+      provider: { type: String, trim: true },
+      externalId: { type: String, trim: true },
+      url: { type: String, trim: true },
+      runId: { type: String, trim: true },
+    },
   },
   { timestamps: true }
 );
 
 propertySchema.index({ title: "text", description: "text", "location.city": "text", "location.area": "text" });
+propertySchema.index(
+  { "source.provider": 1, "source.externalId": 1 },
+  { unique: true, sparse: true, name: "property_source_provider_externalId_unique" }
+);
 
 module.exports = mongoose.model("Property", propertySchema);

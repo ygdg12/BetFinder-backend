@@ -9,6 +9,7 @@ const authRoutes = require("./routes/auth.routes");
 const propertyRoutes = require("./routes/property.routes");
 const bookingRoutes = require("./routes/booking.routes");
 const adminRoutes = require("./routes/admin.routes");
+const apifyRoutes = require("./routes/apify.routes");
 const { notFound, errorHandler } = require("./middleware/error.middleware");
 
 const app = express();
@@ -72,6 +73,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/properties", propertyRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/apify", apifyRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

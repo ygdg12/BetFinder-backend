@@ -35,6 +35,10 @@ Server base URL: `http://localhost:5000/api`
 - `CLOUDINARY_API_SECRET`
 - `ADMIN_EMAIL` (for seed)
 - `ADMIN_PASSWORD` (for seed)
+- `APIFY_TOKEN` (Apify API token)
+- `APIFY_ACTOR_ID` (default Actor to run)
+- `APIFY_IMPORT_AGENT_EMAIL` (email of User that will own imported properties; defaults to `ADMIN_EMAIL`)
+- `APIFY_WEBHOOK_SECRET` (optional; validate `X-Webhook-Secret` on `/api/apify/webhook`)
 
 ## API Endpoints
 
@@ -68,3 +72,9 @@ Server base URL: `http://localhost:5000/api`
 ### Admin
 
 - `GET /admin/stats`
+
+### Apify (scrape + import)
+
+- `POST /apify/runs` (admin) start Actor run
+- `POST /apify/runs/:runId/import` (admin) import dataset of a run
+- `POST /apify/webhook` (public) Apify webhook callback → imports the run dataset
